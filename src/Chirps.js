@@ -22,6 +22,16 @@ export class ChirpBox extends React.Component {
     event.preventDefault(); //don't submit
     
     /* Add a new Chirp to the database */
+    var chirpsRef = firebase.database().ref('chirps')
+    //var ref = jsonInTheSky['chirps'];
+
+    var chirpData = {
+      text: this.state.post,
+      userId: firebase.auth().currentUser.uid,
+      time: firebase.database.ServerValue.TIMESTAMP
+    }
+
+    chirpsRef.push(chirpData);
 
 
     this.setState({post:''}); //empty out post (controlled input)
@@ -62,9 +72,9 @@ export class ChirpList extends React.Component {
   //It is cleaner to use this than the constructor for fetching data
   componentDidMount() {
     /* Add a listener for changes to the user details object, and save in the state */
-
-
+    
     /* Add a listener for changes to the chirps object, and save in the state */
+    
 
   }
 
