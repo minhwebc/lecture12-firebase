@@ -21,8 +21,17 @@ export class ChirpBox extends React.Component {
   postChirp(event){
     event.preventDefault(); //don't submit
     
-    /* Add a new Chirp to the database */
 
+    /* Add a new Chirp to the database */
+    var chirpData = {
+      text: this.state.post,
+      userId: firebase.auth().currentUser.uid,
+      time: firebase.database.ServerValue.TIMESTAMP
+    }
+
+    var chirpsRef = firebase.database().ref('chirps');
+    chirpsRef.push(chirpData);
+    
 
     this.setState({post:''}); //empty out post (controlled input)
   }
@@ -31,7 +40,7 @@ export class ChirpBox extends React.Component {
     return (
       <div className="chirp-box write-chirp">
         {/* Show image of current user, who must be logged in */}
-        <img className="image" src='' alt="user avatar" />
+        <img className="image" src={firebase.auth().currentUser.photoURL} alt="user avatar" />
 
         <form className="chirp-input" role="form">
           <textarea placeholder="What's happening...?" name="text" value={this.state.post} className="form-control" onChange={(e) => this.updatePost(e)}></textarea>
@@ -63,9 +72,26 @@ export class ChirpList extends React.Component {
   componentDidMount() {
     /* Add a listener for changes to the user details object, and save in the state */
 
+    var usersRef = firebase.database().ref('users');
+    usersRef.on('value', (snapshot) =>{
+      var newVal = snapshot.val();
+
+      this.setState({users:newVal});
+    });
 
     /* Add a listener for changes to the chirps object, and save in the state */
 
+    var chirpsRef = firebase.database().ref('chirps');
+    chirpsRef.on('value', (snapshot) =>{
+      var chirpsArray = []; //an array to put in the state
+      snapshot.forEach(function(childSnapshot){ //go through each item like an array
+        var chirpObj = childSnapshot.val(); //convert this snapshot into an object
+        chirpObj.key = childSnapshot.key; //save the child's unique id for later
+        chirpsArray.push(chirpObj); //put into our new array
+      });
+
+      this.setState({chirps:chirpsArray}); //add to state
+    });
   }
 
   render() {
@@ -75,9 +101,13 @@ export class ChirpList extends React.Component {
     }
 
     /* Create a list of <ChirpItem /> objects */
+    var chirpItems = this.state.chirps.map((chirp) => {
+      return <ChirpItem chirp={chirp} 
+                        user={this.state.users[chirp.userId]} 
+                        key={chirp.key} />
+    })
 
-
-    return null; //should return element containing the <ChirpItems/> instead!
+    return (<div>{chirpItems}</div>);//should return element containing the <ChirpItems/> instead!
   }
 }
 
